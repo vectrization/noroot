@@ -7,24 +7,28 @@ import SidebarSection from './SidebarSection.astro';
 import SidebarToggle from './SidebarToggle';
 ---
 
-<div class="flex relative">
+<div class="flex">
     <aside
     id="sidebar"
-    class="w-64 bg-zinc-800 p-6 border-r border-zinc-700 transition-all duration-300 overflow-hidden"
+    class="w-full h-full md:translate-y-0 md:w-64 fixed bg-zinc-800 p-6 border-r border-zinc-700 transition-all duration-300 overflow-hidden md:static z-40" 
     >
+    <!-- md-relative md:w-64 -->
     <h2 class="text-sm uppercase text-zinc-300 mb-4">unix notes</h2>
 
 
-    <ul class="space-y-2 text-sm block">
+    <ul class="space-y-2 text-sm block px-[5vw] md:px-[0vw]">
         {items.map((item, index) => (
         <SidebarSection key={index} item={item} />
         ))}
     </ul>
     </aside>
 
+    <div
+    id="sidebar-backdrop"
+    class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"
+    ></div>
+
     <SidebarToggle client:load />
 
-    <main class="flex-1 p-6">
     <slot />
-    </main>
 </div>

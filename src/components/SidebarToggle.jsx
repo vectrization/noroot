@@ -8,23 +8,27 @@ export default function SidebarToggle() {
     if (!sidebar) return;
 
     if (isCollapsed) {
-      sidebar.classList.add("w-xs");
-      sidebar.classList.add("-translate-x-64")
+      sidebar.classList.add("-translate-y-full");
+
+      sidebar.classList.add("md:w-xs");
+      sidebar.classList.add("md:-translate-x-64");
     } else {
-      sidebar.classList.remove("w-xs");
-      sidebar.classList.remove("-translate-x-64")
+      sidebar.classList.remove("-translate-y-full");
+
+      sidebar.classList.remove("md:w-xs");
+      sidebar.classList.remove("md:-translate-x-64");
     }
   }, [isCollapsed]);
 
   return (
     <button
-        className={`absolute top-6 transition-all duration-500
-            ${isCollapsed ? "left-4 rotate-180" : "left-[18rem] -translate-x-1/2"}
-            p-2 text-zinc-400 hover:text-white material-icons`}
+        className={`fixed md:absolute top-4 right-8 md:right-auto md:left-[18rem] transition-all duration-500
+            ${isCollapsed ? "md:left-1 rotate-180" : "md:left-[18rem]]"}
+            p-2 text-zinc-400 hover:text-white material-icons z-50`}
         aria-label=""
         onClick={() => setIsCollapsed(!isCollapsed)}
     >
-      arrow_back
+      {isCollapsed ? "menu" : "close"}
     </button>
   );
 }
