@@ -1,0 +1,45 @@
+---
+title: Linux
+layout: ../../../layouts/notes.astro
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro";
+
+# Linux Basics
+
+lorem ipsum dolor sit amet.
+Work in progress, other pages are not even made.
+
+Depending on the version of linux you’re using, your package manager may be: apt for debian, pacman and yay for arch (i dont remember the rest they kinda suck frfr).
+
+Where Windows stores files in paths such as C:/Users/$\{youruser}/PathToFIle and C:/Path/To/File, Linux(and other Unix-based OSes, including but not limited to MacOS).
+
+There are multiple types of shells for Unix-based Operating Systems. The most common and default shell of Linux is Bash. The more modern and default shell of MacOS(since 2017) is zsh.
+
+
+Common Linux commands include:
+
+| command  | description                                                                                                                                                                                                                                                | example                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `ls [dir]` | Lists files and folders in a given directory. Optional file path argument to specify directory to list, otherwise it will use the current working directory. You can use the “-l” flag to show a summary of the file/folder properties alongside the list. | user@debian:~$ ls<br/>Desktop Document Downloads Music Pictures Public Templates Videos |
+| `cd [dir]` | Changes the current working directory to the specified path.                                                                                                                                                                                               | user@debian:\~\$cd Desktop<br/>user@debian~/Desktop$                                       |
+
+
+## Cpu stress script
+
+<CodeBlock language="shell" code={`#!/bin/bash
+#Get the number of CPU cores
+CORES=$(nproc)
+
+echo "Starting load on $CORES cores"
+echo "Press Ctrl + C to stop the test"
+
+# trap the exit signal to kill the background process only when you hit ctrl+c
+trap 'kill 0' SIGINT
+
+for i in $(seq 1 $CORES); do
+    sha1sum /dev/zero > /dev/null &
+done
+
+# Keep the script running
+wait`} highlightLines={[9, 12]}/>

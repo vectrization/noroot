@@ -1,0 +1,30 @@
+---
+type Page = { label: string; route: string; active?: boolean };
+type Section = { name: string; pages: (Page | Section)[]; active?: boolean };
+
+const { items } = Astro.props as { items: (Page | Section)[] };
+import SidebarSection from './SidebarSection.astro';
+import SidebarToggle from './SidebarToggle';
+---
+
+<div class="flex relative">
+    <aside
+    id="sidebar"
+    class="w-64 bg-zinc-800 p-6 border-r border-zinc-700 transition-all duration-300 overflow-hidden"
+    >
+    <h2 class="text-sm uppercase text-zinc-300 mb-4">unix notes</h2>
+
+
+    <ul class="space-y-2 text-sm block">
+        {items.map((item, index) => (
+        <SidebarSection key={index} item={item} />
+        ))}
+    </ul>
+    </aside>
+
+    <SidebarToggle client:load />
+
+    <main class="flex-1 p-6">
+    <slot />
+    </main>
+</div>
