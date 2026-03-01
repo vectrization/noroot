@@ -2,8 +2,8 @@
 type Page = { label: string; route: string; active?: boolean };
 type Section = { name: string; pages: (Page | Section)[]; active?: boolean };
 
-let title;
-const currentRoute = Astro.url.pathname;
+let title = "Unix Notes";
+const currentRoute = Astro.url.pathname.replace(/\/$/, "");
 
 import "../styles/global.css";
 import Sidebar from "../components/Sidebar.astro";
@@ -89,7 +89,6 @@ markActive(lessons, currentRoute);
   <head>
     <meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code&display=swap" rel="stylesheet">
@@ -156,8 +155,8 @@ markActive(lessons, currentRoute);
       }, ms);
     };
   </script>
-	<main class="flex-1 p-10 max-w-5xl center">
-		<h1 class="text-3xl font-semibold mb-6">{title}</h1>
+	<main class="flex-1 p-4 mx-auto md:max-w-5xl center">
+		<h1 class="text-2xl sm:text-3xl font-semibold mb-6">{title}</h1>
       <slot />
 	</main>
 	</body>
