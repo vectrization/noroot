@@ -80,7 +80,7 @@ Hidden files are typically configuration files.
 ## Changing directories
 To move to a directory, you use `cd`.
 
-<CodeBlock language="shellsession" code={`user@machine:/$ ls home\nuser@machine:/home$`}/>
+<CodeBlock language="shellsession" code={`user@machine:/$ cs home\nuser@machine:/home$`}/>
 
 `.` refers to the current directory, and `..` refers to the parent directory.
 
@@ -97,7 +97,7 @@ Relative paths are paths relative to the CWD. For instance, If you're in `~`, th
 
 Note that file paths in UNIX are case-sensitive. `Documents` is not the same as `documents`.
 
-## Creating and removing files
+## File operations
 
 Creating an empty file is done through `touch`.
 <CodeBlock language="shellsession" code={`user@machine:~$ touch example.txt\n\nuser@machine:~$ ls\nexample.txt`}/>
@@ -112,3 +112,32 @@ To remove a file, you can use `rm`. You should be careful with `rm` as it does n
 <CodeBlock language="shellsession" code={`user@machine:~$ rm example.txt\n\nuser@machine:~$ ls\n`}/>
 Note that the `rm` command can be used to delete folders too if you utilize the `-r`(recursive) flag. You can also use the `-f` flag to force deletion.
 <CodeBlock language="shellsession" code={`user@machine:~$ ls example\nexample.txt  file1.txt  file2.txt  folder1  folder2\nuser@machine:~$ rm -rf example\n\nuser@machine:~$ ls\n`}/>
+To print the file contents, you can use the `cat` command.
+<CodeBlock language="shellsession" code={`user@machine:~$ cat example.txt\nlorem ipsum dolor sit amet`}/>
+For longer files, use `less`.
+<CodeBlock language="shellsession" code={`user@machine:~$ less example.txt`}/>
+Once you use less, your terminal will clear and the contents of the file will be shown. You can press `q` to exit this screen, or press `j` to scroll down and `k` to scroll up.
+You can also scroll with arrow keys.
+
+To modify a file's contents, you can use `nano` or `vim`(or the more modern, `nvim`). For our purposes, we will be using `nano` as it is the easiest to learn.
+<CodeBlock language="shellsession" code={`user@machine:~$ nano example.txt`}/>
+You do not need to have a file location in the command, having one simply writes to that file location.
+Once you enter the command, your screen will be cleared and replaced with the nano TUI (Text-based User Interface).
+You can edit your content as you usually would, however a few keybinds like copy and pasting and what not are remapped.
+You can view the keybinds at the bottom section. 
+
+Once you want to save your file in nano, press `Ctrl + O` and enter to confirm the file path. Finally, press `Ctrl + K` and enter to exit the TUI.
+
+For now, you don't require `vim` as it is a more advanced text editor. If you do enter it by accident, type `:q` to exit. You may need to press escape if it says "INSERT" at the bottom of the screen.
+
+## Command history
+Press the up arrow to scroll through previous commands.
+You can also search history via doing `Ctrl + R` and typing part of a command.
+
+This is faster than retyping long commands.
+
+## Autocomplete
+Press `Tab` while typing a command or filename and the shell will attempt to auto-complete it. This can reduce typos and speeds up workflows.
+
+## Stopping a running command
+If a command runs for too long, use `Ctrl + C`. This is also known as a SIGINT (Signal Interupt) to the running process. You'll use this frequently when testing scripts or if something were to hang.
