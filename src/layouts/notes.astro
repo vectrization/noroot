@@ -3,7 +3,14 @@ type Page = { label: string; route: string; active?: boolean };
 type Section = { name: string; pages: (Page | Section)[]; active?: boolean };
 
 let title = "Unix Notes";
-const currentRoute = Astro.url.pathname.replace(/\/$/, "");
+
+function normalize(path: string): string {
+  return decodeURIComponent(path)
+    .replace(/\/$/, "")
+    .toLowerCase();
+}
+
+const currentRoute = normalize(Astro.url.pathname);
 
 import "../styles/global.css";
 import Sidebar from "../components/Sidebar.astro";
@@ -17,7 +24,7 @@ function markActive(pages: (Page | Section)[], currentRoute: string): boolean {
       item.active = childActive;
       if (childActive) found = true;
     } else {
-      if (item.route === currentRoute) {
+      if (normalize(item.route) === currentRoute) {
         item.active = true;
         title = item.label;
         found = true;
@@ -30,53 +37,90 @@ function markActive(pages: (Page | Section)[], currentRoute: string): boolean {
   return found;
 }
 
-const lessons = [ //placeholder routes to ensure sidebar working
-  { label: "linux", route: "/linux"},
+const lessons = [
   {
-    name: "Intro",
+    name: "Getting Started",
     pages: [
-      { label: "Welcome", route: "/intro/welcome" },
-      { label: "Setup", route: "/intro/setup", },
+      { label: "Welcome", route: "/introduction/welcome" },
+      { label: "Unix Philosophy", route: "/introduction/unix philosophy" },
+      { label: "Terminal Basics", route: "/introduction/terminal basics" }
+    ]
+  },
+  {
+    name: "Working with Files",
+    pages: [
       {
-        name: "Quick Start",
+        name: "Navigation",
         pages: [
-          { label: "First Commands", route: "/intro/quickstart/commands" },
-          { label: "Hello World Script", route: "/intro/quickstart/hello" }
+          { label: "Navigation Basics", route: "/commands/navigation" }
+        ]
+      },
+      {
+        name: "File Management",
+        pages: [
+          { label: "File Operations", route: "/commands/file operations" },
+          { label: "Interacting With Files", route: "/commands/interacting with files" }
+        ]
+      },
+      {
+        name: "Permissions",
+        pages: [
+          { label: "Permissions Overview", route: "/commands/permissions overview" }
+        ]
+      },
+      {
+        name: "Filesystem Concepts",
+        pages: [
+          { label: "Filesystem Layout", route: "/file system/filesystem layout" },
+          { label: "Mounts and Links", route: "/file system/mounts and links" },
+          { label: "Disk Usage", route: "/file system/disk usage" }
         ]
       }
     ]
   },
   {
-    name: "File System",
+    name: "Networking Basics",
     pages: [
-      { label: "Directories", route: "/filesystem/directories" },
-      { label: "Permissions", route: "/filesystem/permissions" },
       {
-        name: "Advanced",
+        name: "IP Configuration",
         pages: [
-          { label: "Links", route: "/filesystem/advanced/links" },
-          { label: "Mount Points", route: "/filesystem/advanced/mounts" },
-          {
-            name: "Special FS",
-            pages: [
-              { label: "Proc FS", route: "/filesystem/advanced/special/proc" },
-              { label: "Sys FS", route: "/filesystem/advanced/special/sys" }
-            ]
-          }
+          { label: "Interfaces and IPs", route: "/networking/interfaces and ips" }
+        ]
+      },
+      {
+        name: "Testing Connectivity",
+        pages: [
+          { label: "Testing and Debugging", route: "/networking/testing and debugging" }
+        ]
+      },
+      {
+        name: "Remote Access",
+        pages: [
+          { label: "SSH Basics", route: "/networking/ssh basics" }
         ]
       }
     ]
   },
   {
-    name: "Users",
+    name: "Shell Scripting",
     pages: [
-      { label: "Accounts", route: "/users/accounts" },
-      { label: "Groups", route: "/users/groups" },
       {
-        name: "Permissions & Sudo",
+        name: "Core Concepts",
         pages: [
-          { label: "User Permissions", route: "/users/permissions" },
-          { label: "Sudoers File", route: "/users/sudoers" }
+          { label: "Scripts and Execution", route: "/shell scripting/scripts and execution" },
+          { label: "Pipelines and Redirections", route: "/shell scripting/pipelines and redirections" }
+        ]
+      },
+      {
+        name: "Control Flow",
+        pages: [
+          { label: "Loops and Conditionals", route: "/shell scripting/loops and conditionals" }
+        ]
+      },
+      {
+        name: "Practical Usage",
+        pages: [
+          { label: "Practical One-liners", route: "/shell scripting/practical one-liners" }
         ]
       }
     ]

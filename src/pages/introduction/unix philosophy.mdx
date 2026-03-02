@@ -1,0 +1,114 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+Unix is not just an operating system. It's a philosophy. Understanding that philosophy can make the commandline feel more predictable than chaotic.
+
+---
+
+# The idea
+
+Unix, at it's core, is built around a few simple ideas:
+1. Do one thing well.
+2. Compose small tools together.
+3. Everything is a file.
+4. Text is the universal interface.
+
+These ideas explain why the shell works the way it does.
+
+---
+
+## 1. Do one thing well
+Unix programs are intentionally small and focused.
+* `ls` lists files,
+* `cat` prints file contents,
+* `grep` searches text,
+* `wc` counts lines/words/bytes
+None of these tools try to do everything. Instead, they specialize.
+This reduces complexity. A smaller tool is more reliable, easier to understand, test and combine with other tools.
+
+## 2. Compose small tools
+The real power of UNIX appears when you combine commands using a pipe (`|`).
+A pipe takes the output of the previous command and sends it as input for the next one.
+
+<CodeBlock language="shell" code={`ls -la | wc -l`}/>
+
+What happens here is quite simple:
+* `ls -la` produces text input
+* `wc -l` counts the number of lines
+* The pipe connects them
+
+Here's another example.
+
+<CodeBlock language="shell" code={`ls -la | grep root`}/>
+
+Considering that `grep` searches for a given string, you can probably guess what it does.
+It searches for the string "root" anywhere in the output of `ls -la`. Once it finds it, it only returns lines containing it, or it won't return any at all.
+
+Each program stays simple. The shell glues them together.
+The composability is why UNIX systems scale from tiny scripts to large infrastucture.
+
+## 3. Everything is a file
+In UNIX-like systems, many things behave like files.
+* Regular files
+* Directories
+* Devices (via /dev)
+* Processes (via /proc)
+* Network interfaces (via virtual filesystems.)
+
+<CodeBlock language="shell" code={`cat /dev/zero | head`}/>
+
+`/dev/zero` is not a normal file but you can read it like one.
+This simplifies the system. Instead of inventing a different API for every type of resource, Unix uses a common file interface.
+
+## 4. Text as a universal interface
+UNIX tools communicate using plain text.
+Text is:
+* Human-readable
+* Easy to inspect
+* Easy to transform
+* Easy to pipe between tools
+Even system configuration is often stored in text files. This makes automation very straightforward.
+
+<CodeBlock language="shell" code={`grep "error" logfile.txt`}/>
+This searches for the word "error" in logfile.txt.
+
+Because input and output are just text, the tools remain flexible.
+
+---
+
+## Why this matters for you.
+
+When you run 
+<CodeBlock language="shell" code="ip addr"/>
+
+The output is just text. That means you can:
+* Filter it with `grep`.
+* Extract parts of it with `awk`.
+* Redirect it into a file using `>`.
+* Use it inside a script.
+
+## Design tradeoffs
+The UNIX philosophy favors simplicity over feature-heavy design.
+
+Benefits:
+* Tools are small and predictable
+* Systems are easier to automate
+* Debugging is often straightforward
+
+tradeoffs:
+* You sometimes need multiple commands for tasks that other systems bundle into one tool
+* There can be several ways to reach the same result
+
+That flexibility is powerful if you can compose commands effectively.
+
+## Mental model
+
+Think of Unix as:
+* A toolbox of small instruments.
+* A stream processor that moves text between them.
+* A system where composability is more important than graphical polish.
+
+If you understand these ideas, the rest of the command line will feel consistent instead of random.
