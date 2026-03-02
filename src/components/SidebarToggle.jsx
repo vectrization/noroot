@@ -3,6 +3,19 @@ import { useState, useEffect } from "react";
 export default function SidebarToggle() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+   useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const handleChange = (e) => {
+      setIsCollapsed(!e.matches);
+    };
+    handleChange(mediaQuery);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
   useEffect(() => {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;

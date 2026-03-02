@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "copy-v86": "shx cp node_modules/v86/build/v86.wasm public/v86.wasm && shx cp node_modules/v86/build/libv86.mjs public/libv86.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^6.3.10",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
-    "shiki": "^4.0.0"
+    "shiki": "^4.0.0",
+    "shx": "^0.4.0"
   }
 }
