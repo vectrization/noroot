@@ -1,0 +1,46 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+Once your network interfaces and DNS are configured, its important to verify that your system can reach other machines and the internet.
+This section covers the essential tools for beginners.
+
+## Checking Basic Connectivity with `ping`
+The `ping` command sends ICMP echo requests to a host to see if it responds.
+<CodeBlock language="shellsession" code={`user@machine:~$ ping 8.8.8.8\n64 bytes from 8.8.8.8: icmp_seq=1 ttl=114 time=6.97 ms\n64 bytes from 8.8.8.8: icmp_seq=2 ttl=114 time=6.99 ms\n^C\n--- 8.8.8.8 ping statistics ---\n2 packets transmitted, 2 received, 0% packet loss, time 1002ms\nrtt min/avg/max/mdev = 6.970/6.980/6.991/0.010 ms`}/>
+* Sends packets to Google's public DNS server.
+* Press `Ctrl + C` to stop otherwise it will repeatedly ping.
+* Success indicates your network interface is working and you can reach the target IP.
+
+You can also test DNS resolution.
+<CodeBlock language="shellsession" code={`user@machine:~$ ping example.com\nPING example.com (104.18.26.120) 56(84) bytes of data.\n64 bytes from 104.18.26.120: icmp_seq=1 ttl=55 time=8.48 ms\n^C\n--- example.com ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = 8.475/8.475/8.475/0.000 m\n`}/>
+* Ensures your DNS server is translating domain names into IPs.
+
+## Checking Routes with `ip route`
+Sometimes you can't reach a host due to routing issues. Check your routing table.
+<CodeBlock language="shellsession" code={`user@machine:~$ ip route show\ndefault via 172.29.16.1 dev eth0 proto kernel\n172.29.16.0/20 dev eth0 proto kernel scope link src 172.29.26.129`}/>
+* `default via <IP>` -> Your default gateway
+* Local network routes show which IPs are reachable directly.
+
+## Tracing the Path with `traceroute`
+Note that this may not come built into linux.
+`traceroute`(or `tracepath`) shows the route packets take to reach a host.
+<CodeBlock language="shellsession" code={`user@machine:~$ tracepath example.com # For this example, I will be using tracepath instead of traceroute as I do not have that installed. Do note they essentially provide the same information.\n 1?: [LOCALHOST]                      pmtu 1500\n 1:  172.29.16.1                                           0.482ms\n 1:  172.29.16.1                                           0.534ms\n 2:  192.168.28.1                                          1.946ms\n 3:  192.168.18.1                                          3.332ms\n 4:  1.64.212.218.starhub.net.sg                           8.209ms\n 5:  183.90.44.201                                        37.261ms\n 6:  no reply\n 7:  no reply\n 8:  203.118.6.126                                         7.150ms\n 9:  162.158.160.230                                       8.434ms asymm 10\n10:  172.69.117.39                                         6.354ms\n11:  172.69.117.103                                        8.728ms asymm 10\n12:  no reply\n13:  no reply\n14:  no reply\n15:  no reply\n16:  no reply\n17:  no reply\n18:  no reply\n19:  no reply\n20:  no reply\n21:  no reply\n22:  no reply\n23:  no reply\n24:  no reply\n25:  no reply\n26:  no reply\n27:  no reply\n28:  no reply\n29:  no reply\n30:  no reply\n     Too many hops: pmtu 1500\n     Resume: pmtu 1500`}/>
+
+* You may notice that some entries say "no reply". This is because the server blocks ICMP requests but allows normal network traffic to pass through.
+* After 30 hops, the `tracepath` command returns.
+
+## Checking Port Connectivity with `nc` (optional)
+`nc` (netcat) can test if a service on a host is reachable. If available, netcat connects to the host on the specified port.
+<CodeBlock language="shellsession" code={`nc -zw example.com 80`}/>
+* `-z` -> just scan without sending data
+* `-v` -> verbose output
+* Tests if port 80 (HTTP) is reachable.
+
+It is more recommended to use `ping` instead general network connectivity testing.
+
+## Summary
+* Use `ping` to check if hosts/IPs are reachable.
+* Use `ip route show` to verify routing.

@@ -51,50 +51,11 @@ const lessons = [
   {
     name: "Networking Basics",
     pages: [
-      {
-        name: "IP Configuration",
-        pages: [
-          { label: "Interfaces and IPs", route: "/networking/interfaces and ips" }
-        ]
-      },
-      {
-        name: "Testing Connectivity",
-        pages: [
-          { label: "Testing and Debugging", route: "/networking/testing and debugging" }
-        ]
-      },
-      {
-        name: "Remote Access",
-        pages: [
-          { label: "SSH Basics", route: "/networking/ssh basics" }
-        ]
-      }
+      { label: "IP Configuration", route: "/networking/ip config" },
+      { label: "DNS configuration", route: "/networking/dns config" },
+      { label: "Testing connectivity", route: "/networking/testing" },
     ]
   },
-  {
-    name: "Shell Scripting",
-    pages: [
-      {
-        name: "Core Concepts",
-        pages: [
-          { label: "Scripts and Execution", route: "/shell scripting/scripts and execution" },
-          { label: "Pipelines and Redirections", route: "/shell scripting/pipelines and redirections" }
-        ]
-      },
-      {
-        name: "Control Flow",
-        pages: [
-          { label: "Loops and Conditionals", route: "/shell scripting/loops and conditionals" }
-        ]
-      },
-      {
-        name: "Practical Usage",
-        pages: [
-          { label: "Practical One-liners", route: "/shell scripting/practical one-liners" }
-        ]
-      }
-    ]
-  }
 ];
 markActive(lessons, currentRoute);
 ---
@@ -107,7 +68,7 @@ markActive(lessons, currentRoute);
 		<meta name="generator" content={Astro.generator} />
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-		<title>{title}</title>
+		<title>{title} • No-Root</title>
 	</head>
 	<body class="min-h-screen bg-zinc-900 text-zinc-200 flex">
     

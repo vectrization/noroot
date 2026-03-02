@@ -1,0 +1,48 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+DNS (Domain Name System) translates human-readable domain names (like `example.com`) into IP addresses that your system can use to connect to servers.
+On UNIX/Linux, DNS settings are usually configured in `/etc/resolv.conf`.
+
+## Viewing DNS Configuration
+Viewing your current DNS servers can be done through `cat /etc/resolv.conf`.
+As you may recall from the [Terminal Basics](../introduction/welcome) page, the `cat` command prints the contents of a file into the shell.
+<CodeBlock language="shellsession" code={`user@machine:/$ cat /etc/resolv.conf\nnameserver 10.255.255.254`}/>
+* `nameserver` -> Specifies the IP address of a DNS servers
+* Multiple entries can be present in order to use if the first is unavailable.
+
+## Setting DNS temporarily
+You can temporarily change the DNS by editing `/etc/resolv.conf` directly. You will require root, or `sudo` permissions for this.
+<CodeBlock language="shellsession" code={`user@machine:/$ sudo nano /etc/resolv/conf`}/>
+Once in the nano TUI, you may add `nameserver <yourdnsserver>` as a line.
+Once you save and exit nano, the changes will take effect immediately but will reset on reboot or network restart.
+
+## Using systemd-resolve (if available)
+Some modern Linux Systems use `systemd-resolved`.
+**Note that this may not come built into linux.**
+Ensure you have this CLI tool present by running `systemd-resolve`.
+If it not present, utilize the `/etc/resolv.conf` method.
+
+You can check your current DNS with the following command:
+<CodeBlock language="shellsession" code={`user@machine:/$ systemd-resolve --status`}/>
+
+Change DNS temporarily for a specific interface via:
+<CodeBlock language="shellsession" code={`user@machine:/$ sudo systemd-resolve --interface eth0 --set-dns <yourdnsserver>`}/>
+
+## Testing DNS
+Check if DNS resolution works using `ping` or `dig`(if installed).
+<CodeBlock language="shellsession" code={`user@machine:/$ ping example.com\nPING example.com (104.18.27.120) 56(84) bytes of data.\n64 bytes from 104.18.27.120: icmp_seq=1 ttl=55 time=8.29 ms\n64 bytes from 104.18.27.120: icmp_seq=2 ttl=55 time=7.93 ms`}/>
+* *Note that depending on your circumstances, you may have to ping a different domain to properly verify everything is set up.*
+* *Also note that the ping command in Linux does not stop automatically, hence you will have to press `Ctrl + C` to cancel it. Otherwise, it will keep pinging the specified URL.*
+
+<CodeBlock language="shellsession" code={`user@machine:/$ dig example.com # I'd personally recommend just using ping as this is harder to read.\n\n; <<>> DiG 9.20.11-4+b1-Debian <<>> example.com\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 50850\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n;; QUESTION SECTION:\n;example.com.                   IN      A\n\n;; ANSWER SECTION:\nexample.com.            300     IN      A       104.18.26.120\nexample.com.            300     IN      A       104.18.27.120\n\n;; Query time: 11 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (UDP)\n;; WHEN: Mon Mar 02 21:02:37 +08 2026\n;; MSG SIZE  rcvd: 72`}/>
+
+## Summary
+
+* `/etc/resolv.conf` contains your DNS server configuration.
+* Use `nameserver <IP>` lines to specify DNS servers.
+* Changes directly in `/etc/resolv.conf` are **temporary** unless configured via your network manager.
+* Test DNS with `ping`.
