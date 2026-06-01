@@ -37,25 +37,95 @@ function markActive(pages: (Page | Section)[], currentRoute: string): boolean {
   return found;
 }
 
-const lessons = [
+const lessons: Section[] = [
   {
     name: "Getting Started",
     pages: [
       { label: "Welcome", route: "/introduction/welcome" },
       { label: "Unix Philosophy", route: "/introduction/unix philosophy" },
+      { label: "Installation", route: "/introduction/installation" },
       { label: "Terminal Basics", route: "/introduction/terminal basics" },
       { label: "Filesystem Layout", route: "/introduction/filesystem layout" },
       { label: "Permissions Overview", route: "/introduction/permissions overview" },
     ]
   },
   {
-    name: "Networking Basics",
+    name: "Core Concepts",
     pages: [
-      { label: "IP Configuration", route: "/networking/ip config" },
-      { label: "DNS configuration", route: "/networking/dns config" },
-      { label: "Testing connectivity", route: "/networking/testing" },
+      {
+        name: "Files & The Filesystem",
+        pages: [
+          { label: "Paths (Absolute vs Relative)", route: "/core/filesystem/paths" },
+          { label: "File Types", route: "/core/filesystem/file types" },
+          { label: "Hidden Files", route: "/core/filesystem/hidden files" },
+          { label: "Symbolic Links", route: "/core/filesystem/symlinks" },
+        ]
+      },
+      {
+        name: "Working With Files",
+        pages: [
+          { label: "Creating & Removing Files", route: "/core/filesystem/creating removing" },
+          { label: "Copying & Moving Files", route: "/core/filesystem/copy move" },
+          { label: "Searching For Files", route: "/core/filesystem/searching" },
+        ]
+      },
+      {
+        name: "Permissions & Users",
+        pages: [
+          { label: "Users & Groups", route: "/core/permissions/users groups" },
+          { label: "Permission Model (rwx)", route: "/core/permissions/rwx model" },
+          { label: "Numeric vs Symbolic Modes", route: "/core/permissions/numeric symbolic" },
+          { label: "Umask Explained", route: "/core/permissions/umask" },
+        ]
+      },
     ]
   },
+  {
+    name: "Processes & Execution",
+    pages: [
+      {
+        name: "Processes",
+        pages: [
+          { label: "What Is a Process?", route: "/processes/what is a process" },
+          { label: "Foreground vs Background", route: "/processes/foreground background" },
+          { label: "Process States", route: "/processes/process states" },
+        ]
+      },
+      {
+        name: "Signals",
+        pages: [
+          { label: "Understanding Signals", route: "/processes/signals" },
+          { label: "Graceful vs Forceful Termination", route: "/processes/termination" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Networking",
+    pages: [
+      {
+        name: "Fundamentals",
+        pages: [
+          { label: "IP Addresses", route: "/networking/fundamentals/ip addresses" },
+          { label: "Ports & Protocols", route: "/networking/fundamentals/ports protocols" },
+          { label: "DNS Explained", route: "/networking/fundamentals/dns" },
+        ]
+      },
+      {
+        name: "Testing Connectivity",
+        pages: [
+          { label: "Ping & Traceroute", route: "/networking/testing/ping traceroute" },
+          { label: "HTTP Requests", route: "/networking/testing/http requests" },
+          { label: "Inspecting Connections", route: "/networking/testing/inspect connections" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Manuals",
+    pages: [
+    ]
+  }
 ];
 markActive(lessons, currentRoute);
 ---

@@ -1,0 +1,224 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+Installing Linux is the first real step toward understanding how UNIX-like systems work.
+This page focuses on the installation of popular Linux distributions and Windows Subsystem for Linux (WSL), with an emphasis on learning, system administration, and practical fundamentals.
+
+Linux is not an operating system. The term "Linux" actually refers to the underlying Linux kernel, developed by Linus Torvalds (creator of Git) in 1991.
+
+Operating systems running on the Linux kernel are typically called "distributions" (distros).
+
+You may be wondering why UNIX and Linux are so important in our modern age.
+
+They have a massive impact on modern computing:
+
+* Android uses a modified version of the Linux kernel.
+* macOS and iOS are based on Apple's proprietary UNIX operating system derived from OPENSTEP for Mach and FreeBSD.
+* Although Windows is not based on UNIX, it has been influenced by it. Modern Windows includes a feature called WSL (Windows Subsystem for Linux) that allows you to run a Linux distribution inside Windows.
+
+This guide focuses on installing systems in a way that helps you understand what is happening under the hood co-denot just clicking “Next”.
+
+## Windows Subsystem for Linux (WSL)
+
+WSL allows you to run a real Linux userspace inside Windows.
+
+WSL2 uses a real Linux kernel running inside a lightweight virtual machine.
+
+This is ideal if:
+- You are using Windows as your primary OS
+- You want to learn Linux commands
+- You want a development environment without dual booting
+
+### Installing WSL (Windows 11 / modern Windows 10)
+
+Open PowerShell as Administrator:
+
+<CodeBlock language="ps" code={`wsl --install`} />
+
+Reboot when prompted.
+
+You can list available distributions:
+
+<CodeBlock language="ps" code={`wsl --list --online`} />
+
+Install a specific distribution (example: Ubuntu):
+
+<CodeBlock language="ps" code={`wsl --install -d Ubuntu`} />
+
+After installation, launch it and create your UNIX username and password.
+
+### What You Should Understand
+
+- WSL is not a traditional dual-boot system.
+- Files are stored inside a virtual disk.
+- WSL2 runs a real Linux kernel.
+- Systemd support exists in modern WSL versions.
+- Networking behaves slightly differently from a normal Linux machine.
+
+WSL is excellent for beginners and scripting practice, but it is not a replacement for managing a real Linux server.
+
+## Ubuntu
+
+Ubuntu is one of the most beginner-friendly Linux distributions. It is based on Debian and is widely used on desktops and servers.
+
+There are two common editions:
+- Desktop
+- Server
+
+For sysadmin learning, the Server edition is recommended.
+
+### Installation Overview
+
+1. Download the ISO from the official website.
+2. Create a bootable USB (using Rufus, balenaEtcher, etc.).
+3. Boot from the USB.
+4. Follow the installer prompts.
+
+Key choices you will make:
+
+- Keyboard layout
+- Network configuration
+- Partitioning
+- Username and password
+- Whether to install OpenSSH server
+
+### Partitioning Recommendation (Learning Setup)
+
+For a simple lab machine:
+
+- `/` (root) → entire disk
+- swap → optional (or use swap file)
+
+For better practice:
+
+- Separate `/home`
+- Consider separating `/var` for server scenarios
+
+After installation, update your system:
+
+<CodeBlock language="shellsession" code={`user@server:~$ sudo apt update
+user@server:~$ sudo apt upgrade`} />
+
+Ubuntu is ideal for beginners because it hides complexity while still being a real Linux system.
+
+
+## Debian
+
+Debian is known for stability and reliability. Many servers run Debian.
+
+It is more minimal than Ubuntu and closer to “pure” GNU/Linux.
+
+### Installation Overview
+
+The installer offers:
+
+- Graphical mode
+- Text mode
+
+During installation you will configure:
+
+- Hostname
+- Domain name (optional)
+- Root password (or sudo-based setup)
+- Partitioning scheme
+- Software selection
+
+When selecting software, for server practice you can choose:
+
+- Standard system utilities
+- SSH server
+
+After installation:
+
+<CodeBlock language="shellsession" code={`user@debian:~$ sudo apt update
+user@debian:~$ sudo apt upgrade`} />
+
+Debian teaches you a cleaner, less opinionated environment compared to Ubuntu.
+
+It is excellent for learning server fundamentals.
+
+## Arch Linux
+
+Arch Linux is a minimal, rolling-release distribution designed around simplicity and user control.
+
+Unlike Ubuntu or Debian, Arch does not have a guided installer by default.
+You build the system manually.
+
+This makes it extremely valuable for learning how Linux systems are assembled.
+
+### High-Level Installation Steps
+
+1. Boot into the Arch live environment.
+2. Partition the disk.
+3. Format partitions.
+4. Mount the root filesystem.
+5. Install the base system.
+6. Generate fstab.
+7. Install bootloader.
+8. Configure users and networking.
+
+Example (very simplified):
+
+Check disks:
+
+<CodeBlock language="shellsession" code={`root@archiso ~ # lsblk`} />
+
+Format partition:
+
+<CodeBlock language="shellsession" code={`root@archiso ~ # mkfs.ext4 /dev/sdX1`} />
+
+Mount root:
+
+<CodeBlock language="shellsession" code={`root@archiso ~ # mount /dev/sdX1 /mnt`} />
+
+Install base system:
+
+<CodeBlock language="shellsession" code={`root@archiso ~ # pacstrap /mnt base linux linux-firmware`} />
+
+Generate fstab:
+
+<CodeBlock language="shellsession" code={`root@archiso ~ # genfstab -U /mnt >> /mnt/etc/fstab`} />
+
+Arch forces you to understand:
+
+- Filesystems
+- Mount points
+- Bootloaders
+- Kernel packages
+- Init systems
+
+It is highly recommended for intermediate learners who want deep understanding.
+
+## After Installation (All Systems)
+
+No matter which distribution you choose, after first boot you should:
+
+1. Update the system
+2. Create a non-root user (if not already created)
+3. Configure sudo
+4. Enable SSH (for remote access practice)
+5. Set hostname properly
+6. Enable firewall (ufw or equivalent)
+7. Check time synchronization
+
+Example (Debian/Ubuntu):
+
+<CodeBlock language="shellsession" code={`sudo apt install openssh-server
+sudo systemctl enable ssh
+sudo systemctl start ssh`} />
+
+Installing Linux is not just about getting a working machine.
+It is about understanding:
+
+- How the kernel loads
+- How filesystems are mounted
+- How services start
+- How users are created
+- How networking is configured
+
+The installation process is your first exposure to how a UNIX-like system is constructed.
+
+Learning this stage carefully will make everything else co-defilesystems, networking, permissions, processes co-demuch easier to understand.

@@ -22,8 +22,5 @@ export default defineConfig({
     },
     syntaxHighlight: "shiki",
     rehypePlugins: [rehypeAddClasses, rehypeSlug, [rehypeAutolinkHeadings, {behavior: 'wrap'}]]
-  },
-  redirects: {
-    '/': '/introduction/welcome'
   }
 });

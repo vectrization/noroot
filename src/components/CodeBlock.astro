@@ -7,7 +7,7 @@ let codeHTML = '';
 
 const highlighter = await shiki.createHighlighter({
     themes: ['github-dark'],
-    langs: ['shell', 'shellsession', "powershell", "js", "py", "c", "c#", "c++", "rust"]
+    langs: ['shell', 'shellsession', "powershell", "vb", "js", "py", "c", "c#", "c++", "rust"]
 });
 codeHTML = await highlighter.codeToHtml(code, {
     lang: language, theme: 'github-dark',
