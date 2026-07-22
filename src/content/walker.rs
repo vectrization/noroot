@@ -1,4 +1,6 @@
-//please ignore. This is just placeholder content to test codeblocks.
+//please ignore. This is just placeholder content to test codeblocks. 
+//completely unrelated, just an example file of code from github.com/vectrization/post to test syntax highlighting
+
 
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  overflow-x: clip;
+}
+
 code {
   counter-reset: step;
   counter-increment: step 0;
@@ -28,4 +33,10 @@ code .line::before {
 pre, code {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+[data-testid="linux-terminal"] .xterm,
+[data-testid="linux-terminal"] .xterm-viewport,
+[data-testid="linux-terminal"] .xterm-screen {
+  height: 100%;
 }
