@@ -1,6 +1,7 @@
 .astro/
 node_modules/
 npm-debug.log*
+.astro-dev-*.log
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*

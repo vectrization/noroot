@@ -15,6 +15,18 @@ import mdx from '@astrojs/mdx';
 export default defineConfig({
   output: 'static',
   integrations: [react(), tailwind(), mdx()],
+  vite: {
+    define: {
+      global: "globalThis",
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: "globalThis",
+        },
+      },
+    },
+  },
   markdown: {
     shikiConfig: {
       theme: "github-dark",

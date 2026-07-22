@@ -1,5 +1,6 @@
 ---
 import * as shiki from 'shiki';
+import { runnableCodeFor } from '../lib/sandbox/runnable-command.js';
 
 const { code, language, highlightLines = [], executeLines = [] } = Astro.props;
 
@@ -15,6 +16,8 @@ codeHTML = await highlighter.codeToHtml(code, {
 highlighter.dispose();
 
 const languages = ["shell", "shellsession", "bash", "zsh", "sh", "console"]
+
+const runnableCode = runnableCodeFor(code, language, executeLines);
 
 if (highlightLines.length > 0) {
     const lines = codeHTML.split(/\r?\n/);
@@ -85,13 +88,28 @@ if (highlightLines.length > 0) {
             </script>
         </button>
 
-        {languages.includes(language) && executeLines && (
+        {languages.includes(language) && runnableCode && (
             <button
             class="flex items-center justify-center w-6 h-6 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition"
-            title="Run in sandbox"
-            onclick="spawnAlert({ message: 'Feature temporarily disabled!', type: 'error', timeout: 3 })"
+            title="Try in sandbox"
+            data-run-code={runnableCode}
             >
             <span class="material-icons text-[16px]">terminal</span>
+            <script is:inline>
+              (() => {
+                const btn = document.currentScript.parentElement;
+                if (!btn) return;
+
+                btn.addEventListener("click", () => {
+                  const code = btn.dataset.runCode || "";
+                  const encoded = btoa(unescape(encodeURIComponent(code)))
+                    .replace(/\+/g, "-")
+                    .replace(/\//g, "_")
+                    .replace(/=+$/, "");
+                  window.location.href = `/sandbox?c=${encoded}`;
+                });
+              })();
+            </script>
             </button>
         )}
 
