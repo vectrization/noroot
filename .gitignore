@@ -1,7 +1,10 @@
-.astro/
-node_modules/
+/.astro/
+/frontend/.astro/
+/node_modules/
+/frontend/node_modules/
 npm-debug.log*
-.astro-dev-*.log
+/.astro-dev-*.log
+/frontend/.astro-dev-*.log
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
@@ -9,6 +12,8 @@ pnpm-debug.log*
 .env.production
 .DS_Store
 .idea/
-dist
-public/*.iso
-public/*.img
+/dist
+/public/*.iso
+/public/*.img
+/frontend/public/*.iso
+/frontend/public/*.img
