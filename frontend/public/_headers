@@ -1,0 +1,8 @@
+/buildroot-bzimage.bin
+  Cache-Control: public, max-age=86400
+
+/v86.wasm
+  Cache-Control: public, max-age=86400
+
+/bios/*
+  Cache-Control: public, max-age=86400

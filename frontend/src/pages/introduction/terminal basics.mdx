@@ -1,0 +1,143 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+The terminal is a text interface for your system. When you type and enter a command, the shell executes them and prints the result.
+The program interpreting your commands is called a shell. On most Linux systems, thats `bash` or `zsh`. On MacOS, as of October 2019, the shell used is `zsh`.
+
+When you open a terminal, you're inside:
+* A user session
+* A current working directory
+* A running shell process
+Understanding those three things prevents most mistakes beginners make.
+
+**One important note is that most commands, especially filesystem related ones, are non-verbose by default. They do not print any output if they succeed. You will have to check manually. (e.g. through `ls`)**
+## The prompt
+You'll see something like this:
+
+`user@machine:~$`
+
+This tells you:
+* `user` - your username, which you can alternatively check with the `whoami` command.
+* `machine` - your hostname, which you can check with `hostname`.
+* `~` - your current working directory (CWD), which you can check with `pwd`. Note that `~` is a shorthand for `/home/user`.
+* `$` - normal user. If you're in root, you would see `#`.
+
+Some Linux distros may show more or less information in different formats, though it will almost always show the username, machine, CWD and privilege mode.
+
+## Where you are
+The directory you're inside of is called the "current working directory".
+Using `pwd`, which essentially means "Print Working Directory".
+
+The shell always runs code relative to your current location unless you specify an absolute path.
+
+<CodeBlock language="shellsession" code={`user@machine:~$ pwd\n/home/user`} />
+
+
+## Listing files
+
+To list the files in your current working directory, or a specified path, you use the `ls` command.
+
+<CodeBlock language="shellsession" code={`user@machine:/$ ls\nbin   dev     etc   init  lib64       media  opt   root  sbin  sys  usr  wslAbmapn  wslKpbMpn  wslollFpn
+boot  Docker  home  lib   lost+found  mnt    proc  run   srv   tmp  var  wslDBakmn  wslLhbmim`} />
+
+However you can also add the `-l` flag to have a more detailed listing of the files, including permissions, owner, and size. You can also add the -a flag to include hidden files.
+<CodeBlock language="shellsession" code={`user@machine:/$ ls -la\ntotal 2772
+drwxr-xr-x  24 root root    4096 Mar  2 13:21 .
+drwxr-xr-x  24 root root    4096 Mar  2 13:21 ..
+lrwxrwxrwx   1 root root       7 Aug 18  2025 bin -> usr/bin
+drwxr-xr-x   2 root root    4096 Aug 18  2025 boot
+drwxr-xr-x  13 root root    3700 Mar  2 13:21 dev
+drwxr-xr-x   3 root root    4096 Dec 19 17:02 Docker
+drwxr-xr-x  89 root root    4096 Mar  2 13:21 etc
+drwxr-xr-x   3 root root    4096 Nov 23 12:01 home
+-rwxrwxrwx   1 root root 2735264 Aug  7  2025 init
+lrwxrwxrwx   1 root root       7 Aug 18  2025 lib -> usr/lib
+lrwxrwxrwx   1 root root       9 Aug 18  2025 lib64 -> usr/lib64
+drwx------   2 root root   16384 Nov 23 12:01 lost+found
+drwxr-xr-x   2 root root    4096 Sep 15 22:09 media
+drwxr-xr-x   5 root root    4096 Nov 23 12:01 mnt
+drwxr-xr-x   2 root root    4096 Sep 15 22:09 opt
+dr-xr-xr-x 247 root root       0 Mar  2 13:21 proc
+drwx------   4 root root    4096 Dec 19 17:02 root
+drwxr-xr-x  16 root root     440 Mar  2 13:21 run
+lrwxrwxrwx   1 root root       8 Aug 18  2025 sbin -> usr/sbin
+drwxr-xr-x   2 root root    4096 Sep 15 22:09 srv
+dr-xr-xr-x  13 root root       0 Mar  2 13:21 sys
+drwxrwxrwt  70 root root   12288 Mar  2 13:27 tmp
+drwxr-xr-x  16 root root    4096 Nov 23 12:41 usr
+drwxr-xr-x  11 root root    4096 Nov 23 13:30 var
+drwx------   2 root root    4096 Dec 20 15:15 wslAbmapn
+drwx------   2 root root    4096 Dec 20 15:15 wslDBakmn
+drwx------   2 root root    4096 Dec 20 15:15 wslKpbMpn
+drwx------   2 root root    4096 Dec 20 15:15 wslLhbmim
+drwx------   2 root root    4096 Dec 20 15:15 wslollFpn`} />
+
+Hidden files are typically configuration files.
+
+## Changing directories
+To move to a directory, you use `cd`.
+
+<CodeBlock language="shellsession" code={`user@machine:/$ cs home\nuser@machine:/home$`}/>
+
+`.` refers to the current directory, and `..` refers to the parent directory.
+
+For instance, if you're in `~` and wish to go back one-level.
+
+<CodeBlock language="shellsession" code={`user@machine:~$ cd ..\nuser@machine:/home$`}/>
+Note that since `~` is a shorthand for `/home/user`, when you go to its parent directory, it says `/home`.
+
+## Absolute vs Relative paths
+
+Absolute paths are paths that start from the root (`/`).
+For instance, `/home/user/Documents` is an absolute path.
+Relative paths are paths relative to the CWD. For instance, If you're in `~`, the same directory would instead be `Documents`.
+
+Note that file paths in UNIX are case-sensitive. `Documents` is not the same as `documents`.
+
+## File operations
+
+Creating an empty file is done through `touch`.
+<CodeBlock language="shellsession" code={`user@machine:~$ touch example.txt\n\nuser@machine:~$ ls\nexample.txt`}/>
+
+To create a directory, similar to windows, you can use `mkdir`.
+<CodeBlock language="shellsession" code={`user@machine:~$ mkdir example\n\nuser@machine:~$ ls\nexample`}/>
+
+To remove a folder, you can use `rmdir`. Do note that the folder must be empty.
+<CodeBlock language="shellsession" code={`user@machine:~$ rmdir example\n\nuser@machine:~$ ls\n`}/>
+
+To remove a file, you can use `rm`. You should be careful with `rm` as it does not delete to a trashbin.
+<CodeBlock language="shellsession" code={`user@machine:~$ rm example.txt\n\nuser@machine:~$ ls\n`}/>
+Note that the `rm` command can be used to delete folders too if you utilize the `-r`(recursive) flag. You can also use the `-f` flag to force deletion.
+<CodeBlock language="shellsession" code={`user@machine:~$ ls example\nexample.txt  file1.txt  file2.txt  folder1  folder2\nuser@machine:~$ rm -rf example\n\nuser@machine:~$ ls\n`}/>
+To print the file contents, you can use the `cat` command.
+<CodeBlock language="shellsession" code={`user@machine:~$ cat example.txt\nlorem ipsum dolor sit amet`}/>
+For longer files, use `less`.
+<CodeBlock language="shellsession" code={`user@machine:~$ less example.txt`}/>
+Once you use less, your terminal will clear and the contents of the file will be shown. You can press `q` to exit this screen, or press `j` to scroll down and `k` to scroll up.
+You can also scroll with arrow keys.
+
+To modify a file's contents, you can use `nano` or `vim`(or the more modern, `nvim`). For our purposes, we will be using `nano` as it is the easiest to learn.
+<CodeBlock language="shellsession" code={`user@machine:~$ nano example.txt`}/>
+You do not need to have a file location in the command, having one simply writes to that file location.
+Once you enter the command, your screen will be cleared and replaced with the nano TUI (Text-based User Interface).
+You can edit your content as you usually would, however a few keybinds like copy and pasting and what not are remapped.
+You can view the keybinds at the bottom section. 
+
+Once you want to save your file in nano, press `Ctrl + O` and enter to confirm the file path. Finally, press `Ctrl + K` and enter to exit the TUI.
+
+For now, you don't require `vim` as it is a more advanced text editor. If you do enter it by accident, type `:q` to exit. You may need to press escape if it says "INSERT" at the bottom of the screen.
+
+## Command history
+Press the up arrow to scroll through previous commands.
+You can also search history via doing `Ctrl + R` and typing part of a command.
+
+This is faster than retyping long commands.
+
+## Autocomplete
+Press `Tab` while typing a command or filename and the shell will attempt to auto-complete it. This can reduce typos and speeds up workflows.
+
+## Stopping a running command
+If a command runs for too long, use `Ctrl + C`. This is also known as a SIGINT (Signal Interupt) to the running process. You'll use this frequently when testing scripts or if something were to hang.

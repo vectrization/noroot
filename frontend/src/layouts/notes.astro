@@ -1,0 +1,224 @@
+---
+type Page = { label: string; route: string; active?: boolean };
+type Section = { name: string; pages: (Page | Section)[]; active?: boolean };
+
+let title = "Unix Notes";
+
+function normalize(path: string): string {
+  return decodeURIComponent(path)
+    .replace(/\/$/, "")
+    .toLowerCase();
+}
+
+const currentRoute = normalize(Astro.url.pathname);
+
+import "../styles/global.css";
+import Sidebar from "../components/Sidebar.astro";
+
+function markActive(pages: (Page | Section)[], currentRoute: string): boolean {
+  let found = false;
+
+  for (const item of pages) {
+    if ('pages' in item) {
+      const childActive = markActive(item.pages, currentRoute);
+      item.active = childActive;
+      if (childActive) found = true;
+    } else {
+      if (normalize(item.route) === currentRoute) {
+        item.active = true;
+        title = item.label;
+        found = true;
+      } else {
+        item.active = false;
+      }
+    }
+  }
+
+  return found;
+}
+
+const lessons: Section[] = [
+  {
+    name: "Getting Started",
+    pages: [
+      { label: "Welcome", route: "/introduction/welcome" },
+      { label: "Unix Philosophxy", route: "/introduction/unix philosophy" },
+      { label: "Installation", route: "/introduction/installation" },
+      { label: "Terminal Basics", route: "/introduction/terminal basics" },
+      { label: "Filesystem Layout", route: "/introduction/filesystem layout" },
+      { label: "Permissions Overview", route: "/introduction/permissions overview" },
+    ]
+  },
+  {
+    name: "Practice",
+    pages: [
+      { label: "Sandbox", route: "/sandbox" },
+    ]
+  },
+  {
+    name: "Core Concepts",
+    pages: [
+      {
+        name: "Files & The Filesystem",
+        pages: [
+          { label: "Paths (Absolute vs Relative)", route: "/core/filesystem/paths" },
+          { label: "File Types", route: "/core/filesystem/file types" },
+          { label: "Hidden Files", route: "/core/filesystem/hidden files" },
+          { label: "Symbolic Links", route: "/core/filesystem/symlinks" },
+        ]
+      },
+      {
+        name: "Working With Files",
+        pages: [
+          { label: "Creating & Removing Files", route: "/core/filesystem/creating removing" },
+          { label: "Copying & Moving Files", route: "/core/filesystem/copy move" },
+          { label: "Searching For Files", route: "/core/filesystem/searching" },
+        ]
+      },
+      {
+        name: "Permissions & Users",
+        pages: [
+          { label: "Users & Groups", route: "/core/permissions/users groups" },
+          { label: "Permission Model (rwx)", route: "/core/permissions/rwx model" },
+          { label: "Numeric vs Symbolic Modes", route: "/core/permissions/numeric symbolic" },
+          { label: "Umask Explained", route: "/core/permissions/umask" },
+        ]
+      },
+    ]
+  },
+  {
+    name: "Processes & Execution",
+    pages: [
+      {
+        name: "Processes",
+        pages: [
+          { label: "What Is a Process?", route: "/processes/what is a process" },
+          { label: "Foreground vs Background", route: "/processes/foreground background" },
+          { label: "Process States", route: "/processes/process states" },
+        ]
+      },
+      {
+        name: "Signals",
+        pages: [
+          { label: "Understanding Signals", route: "/processes/signals" },
+          { label: "Graceful vs Forceful Termination", route: "/processes/termination" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Networking",
+    pages: [
+      {
+        name: "Fundamentals",
+        pages: [
+          { label: "IP Addresses", route: "/networking/fundamentals/ip addresses" },
+          { label: "Ports & Protocols", route: "/networking/fundamentals/ports protocols" },
+          { label: "DNS Explained", route: "/networking/fundamentals/dns" },
+        ]
+      },
+      {
+        name: "Testing Connectivity",
+        pages: [
+          { label: "Ping & Traceroute", route: "/networking/testing/ping traceroute" },
+          { label: "HTTP Requests", route: "/networking/testing/http requests" },
+          { label: "Inspecting Connections", route: "/networking/testing/inspect connections" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Manuals",
+    pages: [
+    ]
+  }
+];
+markActive(lessons, currentRoute);
+---
+
+<html lang="en" class="bg-zinc-900 text-zinc-200">
+  <head>
+    <meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<title>{title} • No-Root</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://no-root-access.pages.dev/" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content='"No Root Access" is a collection of notes for Linux.' />
+    <meta property="og:image" content="https://no-root-access.pages.dev/favicon.svg" />
+    <meta property="og:image:alt" content="tux (linux penguin)" />
+    <meta property="og:image:width" content="64" />
+    <meta property="og:image:height" content="64" />
+    <meta property="og:site_name" content="No Root Access" />
+    <meta property="og:locale" content="en_US" />
+	</head>
+	<body class="min-h-screen bg-zinc-900 text-zinc-200 flex">
+    
+    <Sidebar items={lessons} />
+    <div id="alert-root" class="fixed bottom-0 right-0 m-4 flex flex-col gap-3 z-[999]"></div>
+    <script>
+      (window as any).spawnAlert = function ({ message, type = "normal", timeout = 5 }:{
+      message: string;
+      type?: "normal" | "warning" | "error" | "fatal";
+      timeout?: number;
+    }) {
+      const root = document.getElementById("alert-root");
+      if (!root) return;
+
+      const alert = document.createElement("div");
+      alert.className =
+        "relative flex flex-col p-4 rounded-md shadow-lg transition-all duration-300";
+
+      const styles = {
+        normal: "bg-zinc-800 text-slate-100 border border-zinc-700",
+        warning: "bg-zinc-800 text-yellow-100 border border-zinc-700 border-l-4 border-l-yellow-500/70",
+        error: "bg-zinc-800 text-rose-200 border border-zinc-700 border-l-4 border-l-rose-500/70",
+        fatal: "bg-zinc-800 text-red-300 border border-zinc-700 border-l-4 border-l-red-600/70",
+      };
+
+      alert.classList.add(...(styles[type] ?? styles.normal).split(" "));
+
+      alert.innerHTML = `
+        <div class="flex items-start gap-2 min-w-[20rem] duration-500 transition-all">
+          <span class="material-icons">${
+            {
+              normal: "info",
+              warning: "warning",
+              error: "error_outline",
+              fatal: "dangerous",
+            }[type] ?? "info"
+          }</span>
+          <p class="text-sm">${message}</p>
+        </div>
+        <div class="absolute bottom-0 left-0 w-full h-1 bg-black/20 overflow-hidden">
+          <div class="progress-bar h-full bg-current opacity-60"></div>
+        </div>
+      `;
+
+      root.appendChild(alert);
+
+      const bar = alert.querySelector(".progress-bar") as HTMLElement;
+      const ms = timeout * 1000;
+
+      bar!.style.width = "100%";
+      bar!.offsetWidth;
+      bar!.style.transition = `width ${ms}ms linear`;
+      bar!.style.width = "0%";
+
+      setTimeout(() => {
+        alert.style.opacity = "0";
+        alert.style.transform = "translateY(10px)";
+        setTimeout(() => alert.remove(), 250);
+      }, ms);
+    };
+  </script>
+	<main class="flex-1 p-4 mx-auto md:max-w-5xl center">
+		<h1 class="text-2xl sm:text-3xl font-semibold mb-6">{title}</h1>
+      <slot />
+	</main>
+	</body>
+</html>

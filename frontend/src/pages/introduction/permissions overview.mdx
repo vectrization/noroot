@@ -1,0 +1,74 @@
+---
+layout: ../../layouts/notes.astro
+---
+
+import CodeBlock from '../../components/CodeBlock.astro';
+
+UNIX and Linux rely on a simple and consistent permission system to control access to files and directories.
+Understanding it is essential for safely managing files and running commands.
+
+## Basic Permission Model
+Each file or directory has three types of permissions fore three categories of users.
+
+|permission|meaning|
+|---|---|
+|`r`|Read - View the file contents or list a directory|
+|`w`|Write - Modify the file or add/remove files into a directory|
+|`x`|Execute - run the file as a program or enter a directory|
+
+|user categories|meaning|
+|---|---|
+|`u`|Owner (the user who created the file)|
+|`g`|Group (a set of users)|
+|`o`|Others (everyone else)|
+
+There are more special permissions however we will not be covering that.
+
+Example from `ls -l`:
+`-rw-r--r-- 1 alice staff     27 Mar  2 18:52 example.txt`
+Breakdown:
+* `-` -> regular file (`d` would indicate a directory)
+* `rw-` -> owner (alice) can read/write
+* `r--` -> group (staff) can read only
+* `r--` -> others can read only
+
+<CodeBlock language="shellsession" code={`user@machine:~$ ls -l example.txt\n-rw-r--r-- 1 user user     27 Mar  2 18:52 example.txt`}/>
+
+## Changing permissions
+`chmod` - Change Model
+
+`chmod [options] <permissions> <file>`
+
+Numeric mode:
+* `r=4`, `w=2`, `x=1`
+* Sum values for more permissions. (e.g. `rwx=7`, `rw=6`, `rx=5`)
+* Put the values together for each category(owner, group, others). (e.g. `775`)
+
+<CodeBlock language="shellsession" code={`user@machine:~$ chmod 755 script.sh`}/>
+* Owner: 7 -> 4+2+1 -> read/write/execute
+* Group: 5 -> 4+0+1 -> read/execute
+* Other: 5 -? 4+0+1 -> read/execute
+
+Symbolic mode:
+<CodeBlock language="shellsession" code={`user@machine:~$ chmod u+x script.sh # add execute to owner\nuser@machine:~$ chmod g-w script.sh # remove write from group\nuser@machine:~$ chmod o=r script.sh # set others to read only`}/>
+
+`chown` - change ownership
+`chown owner:group filename`
+
+<CodeBlock language="shellsession" code={`user@machine:~$ chown alice:staff example.txt`}/>
+* alice becomes the owner
+* staff becomes the group
+
+**Only root (or `sudo`) can change ownership.**
+
+## Summary
+
+Every file/directory has owner, group, others and read/write/execute permissions.
+
+Use `ls -l` to inspect.
+
+Use `chmod` to modify permissions, `chown` to change ownership.
+
+Directories need execute to enter; read to list; write+execute to modify contents.
+
+Special bits are advanced, but you may see them in shared directories like `/tmp`.
