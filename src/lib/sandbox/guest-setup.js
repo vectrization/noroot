@@ -67,6 +67,56 @@ exec su -c "$*" root
 `;
 }
 
+const HELP_SCRIPT = `help() {
+  cat <<'EOF'
+No Root Access sandbox help
+---------------------------
+This shell uses BusyBox-style Linux commands. Many commands support:
+
+  <command> --help
+  command -v <command>
+  busybox
+
+Common commands:
+  Files:       ls cat pwd cd mkdir rmdir touch cp mv rm chmod chown find
+  Text:        echo printf grep sed awk head tail sort uniq wc cut tr
+  Processes:   ps kill jobs bg fg sleep time
+  System:      whoami id uname hostname date env export which type
+  Archives:    tar gzip gunzip
+  Network:     ping wget nc netstat ip route ifconfig
+  Shell:       alias unalias history source . set unset test
+
+Notes:
+  man pages are not installed in this tiny sandbox image.
+  Try "man <command>" for a compact fallback, or "<command> --help".
+EOF
+}
+`;
+
+function manScript() {
+  return `#!/bin/sh
+if [ "$#" -eq 0 ]; then
+  echo "Usage: man <command>"
+  echo "This sandbox has no full man page database. Try: man ls"
+  exit 0
+fi
+
+cmd="$1"
+if command -v "$cmd" >/dev/null 2>&1; then
+  "$cmd" --help 2>&1 | head -80
+  exit 0
+fi
+
+if busybox "$cmd" --help >/dev/null 2>&1; then
+  busybox "$cmd" --help 2>&1 | head -80
+  exit 0
+fi
+
+echo "No manual entry for $cmd"
+exit 1
+`;
+}
+
 export function buildRootSetup(scene) {
   const { user } = scene;
   const commands = [
@@ -107,6 +157,8 @@ export function buildRootSetup(scene) {
   commands.push(
     `printf '%s' ${shellQuote(sudoScript(user.password))} > /usr/bin/sudo`,
     "chmod 755 /usr/bin/sudo",
+    `printf '%s' ${shellQuote(manScript())} > /usr/bin/man`,
+    "chmod 755 /usr/bin/man",
     "passwd -d root >/dev/null 2>&1 || true",
   );
 
@@ -127,6 +179,7 @@ export function buildShellSetup(scene, columns, rows, marker) {
     `export HOME=${shellQuote(scene.user.home)}`,
     `export USER=${shellQuote(scene.user.name)}`,
     `export LOGNAME=${shellQuote(scene.user.name)}`,
+    HELP_SCRIPT.trim(),
   ];
 
   for (const [key, value] of Object.entries(scene.env)) {

@@ -5,8 +5,6 @@ import {
   buildShellSetup,
 } from "../lib/sandbox/guest-setup.js";
 import {
-  DISTRO_PROFILES,
-  encodeBase64Url,
   readSandboxSession,
 } from "../lib/sandbox/url-session.js";
 
@@ -32,12 +30,41 @@ const STATUS_TONES = {
 
 const DISTRO_LABELS = {
   buildroot: "Buildroot",
-  "debian-light": "Debian light",
-  "kali-terminal": "Kali terminal",
-  custom: "Custom image",
 };
 
-const AVAILABLE_PROFILES = new Set(["buildroot"]);
+const PROFILE_CONFIGS = {
+  buildroot: {
+    memorySize: 64 * 1024 * 1024,
+    bootTimeoutMs: 30000,
+    boot: {
+      bzimage: {
+        url: "/buildroot-bzimage.bin",
+        size: BUILDROOT_IMAGE_SIZE,
+        async: false,
+      },
+      cmdline: "tsc=reliable mitigations=off random.trust_cpu=on",
+      filesystem: {},
+    },
+  },
+};
+
+const AVAILABLE_PROFILES = new Set(Object.keys(PROFILE_CONFIGS));
+const BOOT_GAME_WIDTH = 72;
+const BOOT_GAME_MAX_WIDTH = 96;
+const BOOT_GAME_HEIGHT = 7;
+const BOOT_GAME_ROW = 6;
+const BOOT_GAME_PLAYER_COLUMN = 8;
+const BOOT_GAME_LANES = [1, 3, 5];
+const BOOT_STAGE_MESSAGES = [
+  "mapping browser memory",
+  "checking image headers",
+  "warming up the emulator",
+  "waiting for firmware",
+  "reading virtual disk sectors",
+  "looking for a serial console",
+  "waiting for login prompt",
+  "preparing disposable session",
+];
 
 function taskListForQuest(quest) {
   if (!quest) return [];
@@ -331,6 +358,8 @@ export default function TerminalSandbox() {
     let inputDisposable = null;
     let resizeObserver = null;
     let bootTimeout = null;
+    let bootMessageTimer = null;
+    let bootGameTimer = null;
     let flushHandle = null;
     let pendingOutput = "";
 
@@ -353,11 +382,10 @@ export default function TerminalSandbox() {
       setStatus({ state: "loading", detail: "Linux image" });
 
       try {
-        const canBootProfile = AVAILABLE_PROFILES.has(scene.profile)
-          || (scene.profile === "custom" && scene.custom.bzimageUrl);
+        const canBootProfile = AVAILABLE_PROFILES.has(scene.profile);
         if (!canBootProfile) {
           setStatus({ state: "offline", detail: `${DISTRO_LABELS[scene.profile]} unavailable` });
-          setBootError(`${DISTRO_LABELS[scene.profile]} is a planned profile. Buildroot is the only bundled image right now.`);
+          setBootError(`${DISTRO_LABELS[scene.profile]} is not configured yet.`);
           return;
         }
 
@@ -442,6 +470,208 @@ export default function TerminalSandbox() {
         let renderedPrompt = "";
         let setupMarkerSeen = false;
         let queuedCommandRunning = false;
+        let bootMessageIndex = 0;
+        let latestDownloadDetail = "";
+        const bootStartedAt = Date.now();
+        const bootGame = {
+          frame: 0,
+          lane: 1,
+          hazards: [{ column: 34, lane: 0, kind: "bad" }, { column: 58, lane: 2, kind: "packet" }],
+          score: 0,
+          best: 0,
+          crashed: false,
+          shield: false,
+          shieldTicks: 0,
+          combo: 0,
+          rngSeed: Date.now() % 2147483647,
+          scrollRemainder: 0,
+          spawnsSincePacket: 0,
+          lastLane: 1,
+          laneStreak: 0,
+          stage: BOOT_STAGE_MESSAGES[0],
+        };
+
+        function bootElapsed() {
+          return formatElapsed(Math.max(0, Math.floor((Date.now() - bootStartedAt) / 1000)));
+        }
+
+        function writeBootLine(message, tone = "38;5;244") {
+          terminal?.writeln(`\u001b[${tone}m[boot ${bootElapsed()}]\u001b[0m ${message}`);
+        }
+
+        function writeBootHelp() {
+          terminal?.writeln("\u001b[38;5;244mkeys:\u001b[0m w/s route lanes  space pulse  r reset game");
+        }
+
+        function writeBootStatus() {
+          const message = BOOT_STAGE_MESSAGES[bootMessageIndex % BOOT_STAGE_MESSAGES.length];
+          bootMessageIndex += 1;
+          bootGame.stage = message;
+          drawBootGame();
+        }
+
+        function resetBootGame() {
+          bootGame.frame = 0;
+          bootGame.lane = 1;
+          bootGame.hazards = [{ column: 34, lane: 0, kind: "bad" }, { column: 58, lane: 2, kind: "packet" }];
+          bootGame.score = 0;
+          bootGame.crashed = false;
+          bootGame.shield = false;
+          bootGame.shieldTicks = 0;
+          bootGame.combo = 0;
+          bootGame.rngSeed = Date.now() % 2147483647;
+          bootGame.scrollRemainder = 0;
+          bootGame.spawnsSincePacket = 0;
+          bootGame.lastLane = 1;
+          bootGame.laneStreak = 0;
+        }
+
+        function bootRandom() {
+          bootGame.rngSeed = (bootGame.rngSeed * 48271) % 2147483647;
+          return bootGame.rngSeed / 2147483647;
+        }
+
+        function chooseLane() {
+          let lane = Math.floor(bootRandom() * BOOT_GAME_LANES.length);
+          if (lane === bootGame.lastLane) bootGame.laneStreak += 1;
+          else bootGame.laneStreak = 0;
+
+          if (bootGame.laneStreak >= 2) {
+            const offset = 1 + Math.floor(bootRandom() * (BOOT_GAME_LANES.length - 1));
+            lane = (bootGame.lastLane + offset) % BOOT_GAME_LANES.length;
+            bootGame.laneStreak = 0;
+          }
+
+          bootGame.lastLane = lane;
+          return lane;
+        }
+
+        function spawnHazard() {
+          const width = Math.max(42, Math.min(terminal?.cols || BOOT_GAME_WIDTH, BOOT_GAME_MAX_WIDTH));
+          const difficulty = Math.min(14, Math.floor(bootGame.score / 90));
+          const spacing = Math.max(9, 22 - difficulty) + Math.floor(bootRandom() * 11);
+          const lane = chooseLane();
+          const forcePacket = bootGame.spawnsSincePacket >= 2;
+          const kind = forcePacket || bootRandom() < 0.34 ? "packet" : "bad";
+          bootGame.spawnsSincePacket = kind === "packet" ? 0 : bootGame.spawnsSincePacket + 1;
+          bootGame.hazards.push({ column: width + spacing, lane, kind });
+        }
+
+        function drawBootGame() {
+          if (!terminal || disposed || ["ready", "interactive", "replaying"].includes(phase)) return;
+          const width = Math.max(42, Math.min(terminal.cols || BOOT_GAME_WIDTH, BOOT_GAME_MAX_WIDTH));
+
+          if (!bootGame.crashed) {
+            bootGame.frame += 1;
+            bootGame.score += 1;
+            if (bootGame.shieldTicks > 0) bootGame.shieldTicks -= 1;
+            if (bootGame.shieldTicks === 0) bootGame.shield = false;
+
+            const speed = 1 + Math.min(2.5, Math.floor(bootGame.score / 70) * 0.2);
+            bootGame.scrollRemainder += speed;
+            const moveBy = Math.max(1, Math.floor(bootGame.scrollRemainder));
+            bootGame.scrollRemainder -= moveBy;
+            bootGame.hazards = bootGame.hazards
+              .map((hazard) => ({ ...hazard, previousColumn: hazard.column, column: hazard.column - moveBy }))
+              .filter((hazard) => hazard.column > -2);
+            if (bootGame.hazards.length === 0 || bootGame.hazards.at(-1).column < width - 18) {
+              spawnHazard();
+            }
+
+            const contact = bootGame.hazards.find((hazard) => (
+              hazard.lane === bootGame.lane
+              && hazard.column <= BOOT_GAME_PLAYER_COLUMN
+              && (hazard.previousColumn ?? hazard.column) >= BOOT_GAME_PLAYER_COLUMN
+            ));
+
+            if (contact?.kind === "packet") {
+              bootGame.combo += 1;
+              bootGame.score += 10 + Math.min(30, bootGame.combo * 2);
+              bootGame.hazards = bootGame.hazards.filter((hazard) => hazard !== contact);
+            } else if (contact && bootGame.shield) {
+              bootGame.shield = false;
+              bootGame.shieldTicks = 0;
+              bootGame.combo = 0;
+              bootGame.hazards = bootGame.hazards.filter((hazard) => hazard !== contact);
+            } else if (contact) {
+              bootGame.crashed = true;
+              bootGame.best = Math.max(bootGame.best, bootGame.score);
+              bootGame.combo = 0;
+            }
+          }
+
+          const rows = Array.from({ length: BOOT_GAME_HEIGHT }, (_, row) => (
+            Array.from({ length: width }, (_, column) => {
+              if (BOOT_GAME_LANES.includes(row)) return "-";
+              return (column + row * 7 + bootGame.frame) % 37 === 0 ? "." : " ";
+            })
+          ));
+
+          for (const hazard of bootGame.hazards) {
+            if (hazard.column < 0 || hazard.column >= width) continue;
+            rows[BOOT_GAME_LANES[hazard.lane]][hazard.column] = hazard.kind === "packet" ? "*" : "#";
+          }
+
+          const playerGlyph = bootGame.crashed ? "x" : bootGame.shield ? "O" : ">";
+          rows[BOOT_GAME_LANES[bootGame.lane]][BOOT_GAME_PLAYER_COLUMN] = playerGlyph;
+          const status = bootGame.crashed
+            ? "route lost: r resets the game only"
+            : `${bootGame.stage}${latestDownloadDetail ? ` / ${latestDownloadDetail}` : ""}`;
+          const speed = 1 + Math.min(2.5, Math.floor(bootGame.score / 70) * 0.2);
+          const meta = `packets ${String(bootGame.score).padStart(4, "0")}  best ${String(bootGame.best).padStart(4, "0")}  speed ${speed.toFixed(1)}  combo ${bootGame.combo}`;
+          const stage = `stage ${status}`;
+          const controls = "w/s lanes  space pulse shield  r reset game";
+          const renderRow = (row, index) => row.map((char) => {
+            if (char === "#") return `\u001b[38;5;203m${char}\u001b[0m`;
+            if (char === "*") return `\u001b[38;5;220m${char}\u001b[0m`;
+            if (char === ">" || char === "O" || char === "x") return `\u001b[38;5;45m${char}\u001b[0m`;
+            if (BOOT_GAME_LANES.includes(index)) return `\u001b[38;5;114m${char}\u001b[0m`;
+            return `\u001b[38;5;244m${char}\u001b[0m`;
+          }).join("");
+
+          terminal.write(`\u001b7\u001b[?25l\u001b[${BOOT_GAME_ROW};1H`);
+          terminal.write(`\u001b[38;5;244m${`boot ${bootElapsed()} :: ${DISTRO_LABELS[scene.profile]}`.slice(0, width).padEnd(width)}\u001b[0m`);
+          rows.forEach((row, index) => {
+            terminal.write(`\u001b[${BOOT_GAME_ROW + index + 1};1H${renderRow(row, index)}`);
+          });
+          terminal.write(`\u001b[${BOOT_GAME_ROW + BOOT_GAME_HEIGHT + 1};1H\u001b[38;5;244m${meta.slice(0, width).padEnd(width)}\u001b[0m`);
+          terminal.write(`\u001b[${BOOT_GAME_ROW + BOOT_GAME_HEIGHT + 2};1H\u001b[38;5;244m${stage.slice(0, width).padEnd(width)}\u001b[0m`);
+          terminal.write(`\u001b[${BOOT_GAME_ROW + BOOT_GAME_HEIGHT + 3};1H\u001b[38;5;244m${controls.slice(0, width).padEnd(width)}\u001b[0m`);
+          terminal.write("\u001b8");
+        }
+
+        function handleBootInput(data) {
+          const value = data.toLowerCase();
+          if (value.includes("w")) {
+            bootGame.lane = Math.max(0, bootGame.lane - 1);
+            drawBootGame();
+            return true;
+          }
+          if (value.includes("s")) {
+            bootGame.lane = Math.min(BOOT_GAME_LANES.length - 1, bootGame.lane + 1);
+            drawBootGame();
+            return true;
+          }
+          if (data.includes(" ") || value.includes("\r") || value.includes("\n")) {
+            if (!bootGame.shield && bootGame.score >= 15) {
+              bootGame.score = Math.max(0, bootGame.score - 15);
+              bootGame.shield = true;
+              bootGame.shieldTicks = 35;
+            }
+            drawBootGame();
+            return true;
+          }
+          if (value.includes("r")) {
+            resetBootGame();
+            drawBootGame();
+            return true;
+          }
+          if (value.includes("?")) {
+            writeBootStatus();
+            return true;
+          }
+          return false;
+        }
 
         function flushOutput() {
           flushHandle = null;
@@ -505,6 +735,8 @@ export default function TerminalSandbox() {
         function showShell() {
           if (!terminal || disposed) return;
           if (bootTimeout !== null) window.clearTimeout(bootTimeout);
+          if (bootMessageTimer !== null) window.clearInterval(bootMessageTimer);
+          if (bootGameTimer !== null) window.clearInterval(bootGameTimer);
           const fallbackPrompt = `${scene.user.name}@${scene.hostname}:${scene.cwd}${scene.user.name === "root" ? "#" : "$"} `;
           const prompt = finalPrompt(serialTail, fallbackPrompt);
           renderedPrompt = prompt;
@@ -523,29 +755,23 @@ export default function TerminalSandbox() {
           }
         }
 
-        const bzimage = scene.profile === "custom"
-          ? {
-            url: scene.custom.bzimageUrl,
-            ...(scene.custom.bzimageSize ? { size: scene.custom.bzimageSize } : {}),
-            async: false,
-          }
-          : {
-            url: "/buildroot-bzimage.bin",
-            size: BUILDROOT_IMAGE_SIZE,
-            async: false,
-          };
+        const profileConfig = PROFILE_CONFIGS.buildroot;
+        const bootConfig = profileConfig.boot;
+
+        writeBootLine(`loading ${DISTRO_LABELS[scene.profile]} profile`, "38;5;45");
+        writeBootLine("kernel image selected");
+        writeBootHelp();
+        bootMessageTimer = window.setInterval(writeBootStatus, 3500);
+        bootGameTimer = window.setInterval(drawBootGame, 140);
+        drawBootGame();
 
         emulator = new V86({
           wasm_path: "/v86.wasm",
-          memory_size: 64 * 1024 * 1024,
+          memory_size: profileConfig.memorySize,
           vga_memory_size: 2 * 1024 * 1024,
           bios: { url: "/bios/seabios.bin" },
           vga_bios: { url: "/bios/vgabios.bin" },
-          bzimage,
-          filesystem: {},
-          cmdline: scene.profile === "custom" && scene.custom.cmdline
-            ? scene.custom.cmdline
-            : "tsc=reliable mitigations=off random.trust_cpu=on",
+          ...bootConfig,
           autostart: true,
           disable_keyboard: true,
           disable_mouse: true,
@@ -553,6 +779,10 @@ export default function TerminalSandbox() {
         });
 
         inputDisposable = terminal.onData((data) => {
+          if (!["ready", "interactive", "replaying"].includes(phase)) {
+            handleBootInput(data);
+            return;
+          }
           if (!emulator || !["ready", "interactive", "replaying"].includes(phase)) return;
           if (phase !== "replaying") {
             for (const char of data) {
@@ -580,12 +810,15 @@ export default function TerminalSandbox() {
         emulator.add_listener("download-progress", (progress) => {
           if (disposed || !progress?.total) return;
           const percent = Math.min(100, Math.round((progress.loaded / progress.total) * 100));
+          latestDownloadDetail = `${percent}% downloaded`;
           setStatus({ state: "loading", detail: `${percent}%` });
         });
 
         emulator.add_listener("download-error", () => {
           if (disposed) return;
-          setBootError("The Linux image could not be loaded.");
+          setBootError(bootConfig.hda?.url
+            ? "The disk image could not be loaded. Check that the image URL allows CORS and Range requests from this site."
+            : "The Linux image could not be loaded.");
           setStatus({ state: "offline", detail: "image unavailable" });
         });
 
@@ -593,14 +826,50 @@ export default function TerminalSandbox() {
           if (disposed) return;
           const char = String.fromCharCode(byte);
           serialTail = `${serialTail}${char}`.slice(-4096);
+          const shouldProvisionScene = Boolean(bootConfig.filesystem);
 
           if (phase === "booting") {
+            if (/login:\s*$/i.test(serialTail)) {
+              phase = "logging-in";
+              setStatus({ state: "preparing", detail: "login" });
+              emulator.serial0_send(`${scene.user.name}\n`);
+              serialTail = "";
+              return;
+            }
+
             if (hasPromptAtEnd(serialTail)) {
+              if (!shouldProvisionScene) {
+                showShell();
+                return;
+              }
+
               phase = "switching-user";
               serialTail = "";
               setStatus({ state: "preparing", detail: "scene" });
               emulator.serial0_send(buildRootSetup(scene));
             }
+            return;
+          }
+
+          if (phase === "logging-in") {
+            if (/password:\s*$/i.test(serialTail)) {
+              phase = "login-password";
+              emulator.serial0_send(`${scene.user.password}\n`);
+              serialTail = "";
+            }
+            return;
+          }
+
+          if (phase === "login-password") {
+            if (/login:\s*$/i.test(serialTail)) {
+              phase = "logging-in";
+              setStatus({ state: "preparing", detail: "login failed" });
+              emulator.serial0_send(`${scene.user.name}\n`);
+              serialTail = "";
+              return;
+            }
+
+            if (hasPromptAtEnd(serialTail)) showShell();
             return;
           }
 
@@ -633,10 +902,13 @@ export default function TerminalSandbox() {
         });
 
         bootTimeout = window.setTimeout(() => {
-          if (disposed || !["booting", "switching-user", "setting-up"].includes(phase)) return;
+          if (disposed || !["booting", "logging-in", "login-password", "switching-user", "setting-up"].includes(phase)) return;
+          if (bootMessageTimer !== null) window.clearInterval(bootMessageTimer);
+          if (bootGameTimer !== null) window.clearInterval(bootGameTimer);
+          writeBootLine("boot timed out; press r to retry", "38;5;203");
           setBootError("Linux took too long to reach its shell.");
           setStatus({ state: "offline", detail: "boot timed out" });
-        }, 30000);
+        }, profileConfig.bootTimeoutMs);
       } catch (error) {
         if (disposed) return;
         setBootError(error instanceof Error ? error.message : "Linux could not start.");
@@ -649,6 +921,8 @@ export default function TerminalSandbox() {
     return () => {
       disposed = true;
       if (bootTimeout !== null) window.clearTimeout(bootTimeout);
+      if (bootMessageTimer !== null) window.clearInterval(bootMessageTimer);
+      if (bootGameTimer !== null) window.clearInterval(bootGameTimer);
       if (flushHandle !== null) cancelAnimationFrame(flushHandle);
       resizeObserver?.disconnect();
       inputDisposable?.dispose();
@@ -703,22 +977,6 @@ export default function TerminalSandbox() {
     setNow(Date.now());
   }
 
-  function changeProfile(profile) {
-    const scene = sessionState.scene;
-    if (!scene || !DISTRO_PROFILES.includes(profile)) return;
-
-    const nextScene = { ...scene, profile };
-    if (profile === "custom") {
-      const bzimageUrl = window.prompt("Custom bzImage URL");
-      if (!bzimageUrl) return;
-      nextScene.custom = { ...scene.custom, bzimageUrl };
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    params.set("s", encodeBase64Url(JSON.stringify(nextScene)));
-    window.location.search = params.toString();
-  }
-
   const quest = sessionState.quest;
   const elapsedSeconds = startedAt
     ? Math.max(0, Math.floor(((submittedAt || now) - startedAt) / 1000))
@@ -753,22 +1011,6 @@ export default function TerminalSandbox() {
         </div>
 
         <div className="flex min-w-0 flex-1 justify-end gap-1">
-          {!quest && (
-            <label className="hidden items-center gap-2 sm:flex">
-              <span className="sr-only">Distro profile</span>
-              <select
-                className="h-8 max-w-36 rounded-md border border-zinc-700 bg-zinc-900 px-2 font-mono text-[11px] text-zinc-300 outline-none hover:border-zinc-600 focus-visible:ring-2 focus-visible:ring-blue-400"
-                value={sessionState.scene?.profile || "buildroot"}
-                onChange={(event) => changeProfile(event.target.value)}
-              >
-                {DISTRO_PROFILES.map((profile) => (
-                  <option key={profile} value={profile}>
-                    {DISTRO_LABELS[profile]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           {quest && (
             <button
               className="grid size-8 shrink-0 place-items-center rounded-md text-zinc-400 outline-none hover:bg-zinc-700 hover:text-blue-300 focus-visible:ring-2 focus-visible:ring-blue-400"

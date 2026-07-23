@@ -5,14 +5,6 @@ import {
   buildSandboxUrl,
   encodeSandboxPayloads,
 } from "../lib/sandbox/url-builder.js";
-import { DISTRO_PROFILES } from "../lib/sandbox/url-session.js";
-
-const DISTRO_LABELS = {
-  buildroot: "Buildroot",
-  "debian-light": "Debian light",
-  "kali-terminal": "Kali terminal",
-  custom: "Custom image",
-};
 
 const DEFAULT_PREVIOUS = [
   { id: "previous-1", command: "whoami", behavior: "display", output: "student" },
@@ -398,10 +390,6 @@ export default function SandboxUrlGenerator() {
   const [jsonMode, setJsonMode] = useState(false);
   const [questJson, setQuestJson] = useState("");
   const [hostname, setHostname] = useState("permissions-lab");
-  const [profile, setProfile] = useState("buildroot");
-  const [customBzimageUrl, setCustomBzimageUrl] = useState("");
-  const [customBzimageSize, setCustomBzimageSize] = useState("");
-  const [customCmdline, setCustomCmdline] = useState("");
   const [username, setUsername] = useState("student");
   const [uid, setUid] = useState("1000");
   const [password, setPassword] = useState("learnlinux");
@@ -480,18 +468,12 @@ export default function SandboxUrlGenerator() {
       p: previousValue,
       q: questValue,
       s: {
-        profile,
         hostname,
         user: { name: username, uid: uidValue, password, home },
         cwd,
         questLayout: layout,
         files: filesValue,
         env: environmentValue,
-        custom: {
-          bzimageUrl: customBzimageUrl,
-          bzimageSize: Number(customBzimageSize) || null,
-          cmdline: customCmdline,
-        },
       },
     };
 
@@ -505,9 +487,6 @@ export default function SandboxUrlGenerator() {
     baseUrl,
     command,
     cwd,
-    customBzimageSize,
-    customBzimageUrl,
-    customCmdline,
     environment,
     files,
     home,
@@ -516,7 +495,6 @@ export default function SandboxUrlGenerator() {
     layout,
     password,
     previous,
-    profile,
     questFromFields,
     questJson,
     uid,
@@ -713,12 +691,6 @@ export default function SandboxUrlGenerator() {
                 <ParameterHeading code="s" title="Scene" />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={LABEL_CLASS} htmlFor="profile">Distro profile</label>
-                    <select id="profile" className={`${FIELD_CLASS} mt-1 font-mono`} value={profile} onChange={(event) => setProfile(event.target.value)}>
-                      {DISTRO_PROFILES.map((item) => <option key={item} value={item}>{DISTRO_LABELS[item]}</option>)}
-                    </select>
-                  </div>
-                  <div>
                     <label className={LABEL_CLASS} htmlFor="hostname">Hostname</label>
                     <input id="hostname" className={`${FIELD_CLASS} mt-1 font-mono`} value={hostname} onChange={(event) => setHostname(event.target.value)} />
                   </div>
@@ -744,23 +716,6 @@ export default function SandboxUrlGenerator() {
                     <input id="cwd" className={`${FIELD_CLASS} mt-1 font-mono`} value={cwd} onChange={(event) => setCwd(event.target.value)} />
                   </div>
                 </div>
-
-                {profile === "custom" && (
-                  <div className="mt-5 grid gap-4 rounded-md border border-zinc-700 bg-zinc-950/40 p-4 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                      <label className={LABEL_CLASS} htmlFor="custom-bzimage">Custom bzImage URL</label>
-                      <input id="custom-bzimage" className={`${FIELD_CLASS} mt-1 font-mono`} value={customBzimageUrl} onChange={(event) => setCustomBzimageUrl(event.target.value)} placeholder="https://example.com/buildroot-bzimage.bin" />
-                    </div>
-                    <div>
-                      <label className={LABEL_CLASS} htmlFor="custom-size">Image size</label>
-                      <input id="custom-size" className={`${FIELD_CLASS} mt-1 font-mono`} type="number" min="1" value={customBzimageSize} onChange={(event) => setCustomBzimageSize(event.target.value)} />
-                    </div>
-                    <div>
-                      <label className={LABEL_CLASS} htmlFor="custom-cmdline">Kernel command line</label>
-                      <input id="custom-cmdline" className={`${FIELD_CLASS} mt-1 font-mono`} value={customCmdline} onChange={(event) => setCustomCmdline(event.target.value)} />
-                    </div>
-                  </div>
-                )}
 
                 <div className="mt-6 border-y border-zinc-800 py-5">
                   <div>
