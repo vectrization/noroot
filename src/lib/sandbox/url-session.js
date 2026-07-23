@@ -10,7 +10,7 @@ const MODE_PATTERN = /^[0-7]{3,4}$/;
 
 export const SCENE_ACCENTS = ["cyan", "green", "amber", "magenta"];
 export const SANDBOX_STATE_KEYS = ["c", "p", "q", "s"];
-export const DISTRO_PROFILES = ["buildroot", "debian-light", "kali-terminal", "custom"];
+export const DISTRO_PROFILES = ["buildroot"];
 
 export function encodeBase64Url(value) {
   const bytes = new TextEncoder().encode(String(value));
@@ -253,19 +253,6 @@ export function normalizeScene(value) {
     ? raw.hostname.toLowerCase()
     : "no-root";
   const cwd = validAbsolutePath(raw.cwd) ? raw.cwd : home;
-  const profile = DISTRO_PROFILES.includes(raw.profile) ? raw.profile : "buildroot";
-  const custom = raw.custom && typeof raw.custom === "object" && !Array.isArray(raw.custom)
-    ? raw.custom
-    : {};
-  const customBzimageUrl = typeof custom.bzimageUrl === "string"
-    && /^https?:\/\/[^\s]+$/i.test(custom.bzimageUrl)
-    && custom.bzimageUrl.length <= 2048
-    ? custom.bzimageUrl
-    : "";
-  const customBzimageSize = Number.isInteger(custom.bzimageSize) && custom.bzimageSize > 0
-    ? custom.bzimageSize
-    : null;
-  const customCmdline = limitedText(custom.cmdline, 1000);
   const env = {};
 
   if (raw.env && typeof raw.env === "object" && !Array.isArray(raw.env)) {
@@ -275,7 +262,7 @@ export function normalizeScene(value) {
   }
 
   return {
-    profile,
+    profile: "buildroot",
     hostname,
     user: { name, uid, home, password },
     cwd,
@@ -284,9 +271,12 @@ export function normalizeScene(value) {
     accent: SCENE_ACCENTS.includes(raw.accent) ? raw.accent : "cyan",
     questLayout: raw.questLayout === "horizontal" ? "horizontal" : "vertical",
     custom: {
-      bzimageUrl: customBzimageUrl,
-      bzimageSize: customBzimageSize,
-      cmdline: customCmdline,
+      bzimageUrl: "",
+      bzimageSize: null,
+      hdaUrl: "",
+      hdaSize: null,
+      memorySize: null,
+      cmdline: "",
     },
   };
 }
